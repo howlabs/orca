@@ -47,7 +47,11 @@ export const CLAUDE_EVENTS = [
   {
     eventName: 'PermissionRequest',
     definition: { matcher: '*', hooks: [{ type: 'command', command: '' }] }
-  }
+  },
+  // Why: main-agent Stop can arrive before delegated subagents finish; Orca
+  // tracks these ids so completion hooks and notifications wait for SubagentStop.
+  { eventName: 'SubagentStart', definition: { hooks: [{ type: 'command', command: '' }] } },
+  { eventName: 'SubagentStop', definition: { hooks: [{ type: 'command', command: '' }] } }
 ] as const
 
 export function getConfigPath(settings = CLAUDE_HOOK_SETTINGS): string {

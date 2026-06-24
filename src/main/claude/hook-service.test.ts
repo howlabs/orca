@@ -201,7 +201,9 @@ describe('ClaudeHookService.installRemote', () => {
       'PreToolUse',
       'PostToolUse',
       'PostToolUseFailure',
-      'PermissionRequest'
+      'PermissionRequest',
+      'SubagentStart',
+      'SubagentStop'
     ]) {
       expect(parsed.hooks[event]).toBeTruthy()
       const cmd = parsed.hooks[event][0].hooks[0].command as string

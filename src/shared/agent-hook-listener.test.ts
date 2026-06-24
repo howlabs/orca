@@ -1567,7 +1567,83 @@ describe('shared agent-hook-listener', () => {
       }
     })
 
-    it('refuses unsafe values', () => {
+  
+  it('ignores Claude Stop while tracked subagents are still running', () => {
+    normalizeHookPayload(
+      state,
+      'claude',
+      {
+        paneKey: PANE_KEY,
+        tabId: 'tab-1',
+        payload: {
+          hook_event_name: 'UserPromptSubmit',
+          prompt: 'delegate work'
+        }
+      },
+      'production'
+    )
+    normalizeHookPayload(
+      state,
+      'claude',
+      {
+        paneKey: PANE_KEY,
+        tabId: 'tab-1',
+        payload: {
+          hook_event_name: 'SubagentStart',
+          agent_id: 'agent-subagent-a'
+        }
+      },
+      'production'
+    )
+    const suppressedStop = normalizeHookPayload(
+      state,
+      'claude',
+      {
+        paneKey: PANE_KEY,
+        tabId: 'tab-1',
+        payload: {
+          hook_event_name: 'Stop',
+          last_assistant_message: 'main turn paused'
+        }
+      },
+      'production'
+    )
+    expect(suppressedStop).toBeNull()
+
+    normalizeHookPayload(
+      state,
+      'claude',
+      {
+        paneKey: PANE_KEY,
+        tabId: 'tab-1',
+        payload: {
+          hook_event_name: 'SubagentStop',
+          agent_id: 'agent-subagent-a'
+        }
+      },
+      'production'
+    )
+    const finalStop = normalizeHookPayload(
+      state,
+      'claude',
+      {
+        paneKey: PANE_KEY,
+        tabId: 'tab-1',
+        payload: {
+          hook_event_name: 'Stop',
+          last_assistant_message: 'all work finished'
+        }
+      },
+      'production'
+    )
+    expect(finalStop?.payload).toMatchObject({
+      state: 'done',
+      agentType: 'claude',
+      lastAssistantMessage: 'all work finished'
+    })
+  })
+
+  it('refuses unsafe values', () => {
       const finalPath = join(dir, getEndpointFileName())
       const ok = writeEndpointFile(dir, finalPath, {
         port: 12345,
