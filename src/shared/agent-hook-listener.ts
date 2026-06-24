@@ -35,6 +35,13 @@ import {
   type AgentProviderSessionMetadata
 } from './agent-session-resume'
 import { parsePaneKey } from './stable-pane-id'
+import {
+  applyPaneSubagentHookLifecycle,
+  clearPaneSubagentLifecycle,
+  createPaneSubagentLifecycleMaps,
+  shouldSuppressDoneForActiveSubagents,
+  type PaneSubagentLifecycleMaps
+} from './agent-pane-subagent-lifecycle'
 
 /** Maximum request body size accepted by the listener (1 MB). */
 export const HOOK_REQUEST_MAX_BYTES = 1_000_000
@@ -77,6 +84,7 @@ export type HookListenerState = {
   lastStatusByPaneKey: Map<string, AgentHookEventPayload>
   antigravityCompletedTranscriptByPaneKey: Map<string, string>
   ampCompletedCacheKeys: Set<string>
+  subagentLifecycle: PaneSubagentLifecycleMaps
 }
 
 export function createHookListenerState(): HookListenerState {
@@ -87,7 +95,8 @@ export function createHookListenerState(): HookListenerState {
     lastToolByPaneKey: new Map(),
     lastStatusByPaneKey: new Map(),
     antigravityCompletedTranscriptByPaneKey: new Map(),
-    ampCompletedCacheKeys: new Set()
+    ampCompletedCacheKeys: new Set(),
+    subagentLifecycle: createPaneSubagentLifecycleMaps()
   }
 }
 
@@ -97,6 +106,7 @@ export function clearPaneCacheState(state: HookListenerState, paneKey: string): 
   deletePaneScopedCacheEntry(state.lastStatusByPaneKey, paneKey)
   deletePaneScopedCacheEntry(state.antigravityCompletedTranscriptByPaneKey, paneKey)
   deletePaneScopedSetEntry(state.ampCompletedCacheKeys, paneKey)
+  clearPaneSubagentLifecycle(state.subagentLifecycle, paneKey)
 }
 
 function clearPaneTurnCacheState(state: HookListenerState, paneKey: string): void {
@@ -132,6 +142,7 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.lastStatusByPaneKey.clear()
   state.antigravityCompletedTranscriptByPaneKey.clear()
   state.ampCompletedCacheKeys.clear()
+  state.subagentLifecycle.activeSubagentIdsByPaneKey.clear()
   state.warnedVersions.clear()
   state.warnedEnvs.clear()
 }
@@ -2016,6 +2027,9 @@ function normalizeClaudeEvent(
   paneKey: string,
   hookPayload: Record<string, unknown>
 ): ParsedAgentStatusPayload | null {
+  if (shouldSuppressDoneForActiveSubagents(state.subagentLifecycle, paneKey, eventName)) {
+    return null
+  }
   const stateName =
     eventName === 'UserPromptSubmit' ||
     eventName === 'PreToolUse' ||
@@ -2073,6 +2087,10 @@ function normalizeDevinEvent(
     // mapping SessionStart to 'working' made the sidebar show "Devin - Running"
     // with a spinner before the user typed anything.
     clearPaneTurnCacheState(state, paneKey)
+    return null
+  }
+
+  if (shouldSuppressDoneForActiveSubagents(state.subagentLifecycle, paneKey, eventName)) {
     return null
   }
 
@@ -2135,6 +2153,9 @@ function normalizeKimiEvent(
   paneKey: string,
   hookPayload: Record<string, unknown>
 ): ParsedAgentStatusPayload | null {
+  if (shouldSuppressDoneForActiveSubagents(state.subagentLifecycle, paneKey, eventName)) {
+    return null
+  }
   const toolName = readString(hookPayload, 'tool_name')
   const isUserInputTool = isKimiUserInputTool(toolName)
 
@@ -2637,6 +2658,11 @@ function normalizeCopilotEvent(
   const normalizedEventName = normalizeCopilotEventName(
     resolveCopilotEventName(eventName, hookPayload)
   )
+  if (
+    shouldSuppressDoneForActiveSubagents(state.subagentLifecycle, paneKey, normalizedEventName)
+  ) {
+    return null
+  }
   const notificationType = readFirstString(hookPayload, ['notification_type', 'notificationType'])
   const isBlockingNotification =
     normalizedEventName === 'Notification' &&
@@ -3028,6 +3054,14 @@ export function normalizeHookPayload(
   let hasTranscriptPromptEvidence = false
   // Why: exhaustive switch so adding a source to AgentHookSource fails
   // typecheck here instead of silently routing through OpenCode's normalizer.
+  const subagentToolAgentId = readFirstString(hookPayloadRecord, ['agent_id', 'agentId'])
+  applyPaneSubagentHookLifecycle(
+    state.subagentLifecycle,
+    paneKey,
+    eventName,
+    subagentToolAgentId
+  )
+
   let payload: ParsedAgentStatusPayload | null
   switch (source) {
     case 'claude':
