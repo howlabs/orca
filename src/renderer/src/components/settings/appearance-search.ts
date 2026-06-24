@@ -1,0 +1,137 @@
+import type { SettingsSearchEntry } from './settings-search'
+import { createLocalizedCatalog } from '@/i18n/localized-catalog'
+import { translate } from '@/i18n/i18n'
+import { translateSearchKeyword } from './settings-search-keywords'
+import { SHOW_UI_LANGUAGE_SETTING } from '@/i18n/supported-languages'
+
+export const getThemeEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('auto.components.settings.appearance.search.71e06350b4', 'Theme'),
+    description: translate(
+      'auto.components.settings.appearance.search.0709c794f7',
+      'Choose how Orca looks in the app window.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.appearance.search.262fe1d24f', 'dark'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.44d873fd18', 'light'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.3a9b69d734', 'system')
+    ]
+  }
+])
+
+export const getLanguageEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('settings.appearance.language.title', 'Language'),
+    description: translate(
+      'settings.appearance.language.description',
+      'Choose the language used by the Orca interface.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('settings.appearance.language.title', 'Language'),
+      ...translateSearchKeyword(
+        'settings.appearance.language.description',
+        'Choose the language used by the Orca interface.'
+      ),
+      ...translateSearchKeyword('settings.appearance.language.system', 'System'),
+      ...translateSearchKeyword('settings.appearance.language.english', 'English'),
+      ...translateSearchKeyword('settings.appearance.language.chinese', '中文（简体）'),
+      ...translateSearchKeyword('settings.appearance.language.korean', '한국어'),
+      ...translateSearchKeyword('settings.appearance.language.japanese', '日本語'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.language.locale',
+        'locale'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.language.i18n', 'i18n'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.language.translation',
+        'translation'
+      )
+    ]
+  }
+])
+
+export const getZoomEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('auto.components.settings.appearance.search.c5e933970f', 'UI Zoom'),
+    description: translate(
+      'auto.components.settings.appearance.search.adddb91a3d',
+      'Scale the entire application interface.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.appearance.search.3ae5de6101', 'zoom'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.0952091186', 'scale'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.0c83659f48', 'shortcut')
+    ]
+  }
+])
+
+export const getTypographyEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('auto.components.settings.appearance.search.ddb991024d', 'IDE Font'),
+    description: translate(
+      'auto.components.settings.appearance.search.07c7c38fac',
+      'Choose the font used by the Orca interface.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.appearance.search.24094af355', 'font'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.a0e09aed9c',
+        'typeface'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.8b36fb3f64',
+        'typography'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.fab91464dd', 'ide'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.1f2880a9d5', 'orca'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.5095258df2',
+        'interface'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.36e006efc1', 'app'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.2f12e1aa3a', 'ui')
+    ]
+  }
+])
+
+export const getAppIconEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('auto.components.settings.appearance.search.2b313598c6', 'App Icon'),
+    description: translate(
+      'auto.components.settings.appearance.search.e80c2af428',
+      'Choose the app icon shown in the Dock and window switcher.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.2cfb3420c0',
+        'app icon'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.1f2880a9d5', 'orca'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.d18b54ca90', 'dock'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.e5bc35d59e', 'window'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.651f35b2c6',
+        'switcher'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.f586abfa35', 'blue'),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.468448bba4',
+        'watercolor'
+      )
+    ]
+  }
+])
+
+function buildAppearancePaneSearchEntries(): SettingsSearchEntry[] {
+  return [
+    ...getThemeEntries(),
+    ...(SHOW_UI_LANGUAGE_SETTING ? getLanguageEntries() : []),
+    ...getTypographyEntries(),
+    ...getZoomEntries(),
+    ...getAppIconEntries()
+  ]
+}
+
+export function getAppearancePaneSearchEntries(): SettingsSearchEntry[] {
+  return buildAppearancePaneSearchEntries()
+}
